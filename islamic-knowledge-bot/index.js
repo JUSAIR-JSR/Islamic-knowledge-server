@@ -34,23 +34,32 @@ connectDB();
 
 const bot = new TelegramBot(process.env.TOKEN);
 
-const WEBHOOK_URL =
-  process.env.RENDER_EXTERNAL_URL ||
-  `https://${process.env.RENDER_SERVICE_NAME}.onrender.com`;
+const webhookPath = `/webhook/${process.env.WEBHOOK_SECRET}`;
 
-const webhookPath = `/bot${process.env.TOKEN}`;
+if (WEBHOOK_URL && process.env.WEBHOOK_SECRET) {
 
-// Telegram sends updates here
-app.post(webhookPath, (req, res) => {
-  bot.processUpdate(req.body);
-  res.sendStatus(200);
-});
-
-// Set webhook
-if (WEBHOOK_URL) {
   const fullUrl = `${WEBHOOK_URL}${webhookPath}`;
-  bot.setWebHook(fullUrl)
-    .then(() => console.log("✅ Webhook set to:", fullUrl))
+
+  // Secure webhook endpoint
+  app.post(webhookPath, (req, res) => {
+
+    // Verify Telegram secret header
+    if (
+      req.headers["x-telegram-bot-api-secret-token"] !==
+      process.env.WEBHOOK_SECRET
+    ) {
+      return res.sendStatus(403);
+    }
+
+    bot.processUpdate(req.body);
+    res.sendStatus(200);
+  });
+
+  // Register webhook with Telegram
+  bot.setWebHook(fullUrl, {
+    secret_token: process.env.WEBHOOK_SECRET
+  })
+    .then(() => console.log("✅ Webhook set securely"))
     .catch(err => console.log("❌ Webhook error:", err.message));
 }
 
