@@ -38,9 +38,20 @@ const WEBHOOK_URL =
   process.env.RENDER_EXTERNAL_URL ||
   `https://${process.env.RENDER_SERVICE_NAME}.onrender.com`;
 
+const webhookPath = `/bot${process.env.TOKEN}`;
+
+// Telegram sends updates here
+app.post(webhookPath, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
+});
+
+// Set webhook
 if (WEBHOOK_URL) {
-  bot.setWebHook(`${WEBHOOK_URL}/bot${process.env.TOKEN}`);
-  app.use(bot.webhookCallback(`/bot${process.env.TOKEN}`));
+  const fullUrl = `${WEBHOOK_URL}${webhookPath}`;
+  bot.setWebHook(fullUrl)
+    .then(() => console.log("✅ Webhook set to:", fullUrl))
+    .catch(err => console.log("❌ Webhook error:", err.message));
 }
 
 const OWNER_ID = process.env.OWNER_ID;
