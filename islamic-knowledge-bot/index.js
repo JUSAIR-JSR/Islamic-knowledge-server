@@ -33,7 +33,10 @@ app.use(express.json());
 connectDB();
 
 const bot = new TelegramBot(process.env.TOKEN);
-
+const WEBHOOK_URL =
+  process.env.RENDER_EXTERNAL_URL ||
+  `https://${process.env.RENDER_SERVICE_NAME}.onrender.com`;
+  
 const webhookPath = `/webhook/${process.env.WEBHOOK_SECRET}`;
 
 if (WEBHOOK_URL && process.env.WEBHOOK_SECRET) {
